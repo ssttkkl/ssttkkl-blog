@@ -22,5 +22,7 @@ for file in $doc_files; do
 
     groovy -cp $CLASSPATH convert_doc.groovy $file source/_posts/$year/$month/$day/$title
 
+    rm -f file
+
 done
 
