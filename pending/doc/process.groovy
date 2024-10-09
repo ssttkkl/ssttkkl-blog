@@ -35,8 +35,16 @@ docFiles.each { file ->
     def outputDir = new File("source/_posts/$year/$month/$day/$title")
     outputDir.mkdirs()
 
+    def assetDir = new File(outputDir, title)
+    assetDir.mkdirs()
+
+    def outputFile = new File(outputDir, "${title}.md")
+    def tmpOutputFile = new File(assetDir, "${title}.md")
+
     def doc = new Document(file.toString())
-    doc.save(new File(outputDir, "${title}.md").canonicalPath)
+    doc.save(tmpOutputFile)
+
+    tmpOutputFile.renameTo(outputFile)
 
     // 删除文件
     Files.delete(file)
