@@ -25,14 +25,14 @@ jobs:
       - name: Download Aspose.Words
         # You may pin to the exact commit or the version.
         # uses: valadaptive/download-file-action@64a2f7bc6e92976a3ed6bc4c34297ec05f4549b4
-        uses: valadaptive/download-file-action@v0.1.0
+        uses: ethanjli/cached-download-action@v0.1.2
         with:
           # The URL to fetch
           url: http://upload.liuzy88.com/aspose-words-21.1-jdk17-cracked.jar
           # The path to save the file to. Will be [default directory]/[URL file name] if not provided
           destination: aspose-words.jar
           # Additional key to match against when caching the file
-          additional-cache-key: aspose-words-21.1-jdk17
+          cache-key: aspose-words-21.1-jdk17
           
       - name: Run Doc Converter
         run: |
