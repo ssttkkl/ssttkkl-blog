@@ -12,6 +12,21 @@ String md_header(String title, LocalDateTime date) {
     return "---\ntitle: ${title}\ndate: ${date.format(formatter)}\n---\n"
 }
 
+def deleteDirectory(File dir) {
+    if (dir.exists()) {
+        dir.eachFile { file ->
+            if (file.isDirectory()) {
+                // 递归删除子目录内容
+                deleteDirectory(file)
+            } else {
+                // 删除文件
+                file.delete()
+            }
+        }
+        // 删除目录自身
+        dir.delete()
+    }
+}
 
 // 指定要查找的目录
 def directory = "pending/doc"
@@ -41,14 +56,15 @@ docFiles.each { file ->
     outputDir.mkdirs()
 
     def assetDir = new File(outputDir, title)
-    assetDir.mkdirs()
+    deleteDirectory(assetDir)
 
     def outputFile = new File(outputDir, "${title}.md")
 
     def doc = new Document(file.toString())
     def saveOptions = new MarkdownSaveOptions()
-    saveOptions.setImagesFolder(assetDir.toString())
+    saveOptions.setImagesFolder(title)
     doc.save(outputFile.toString(), saveOptions)
+    new File(title).renameTo(assetDir)
 
     def originalContent = outputFile.text
     def updatedContent = md_header(title, date) + originalContent
