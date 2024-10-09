@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-import com.aspose.words.Document
+import com.aspose.words.*
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.text.SimpleDateFormat
@@ -44,12 +44,11 @@ docFiles.each { file ->
     assetDir.mkdirs()
 
     def outputFile = new File(outputDir, "${title}.md")
-    def tmpOutputFile = new File(assetDir, "${title}.md")
 
     def doc = new Document(file.toString())
-    doc.save(tmpOutputFile.toString())
-
-    tmpOutputFile.renameTo(outputFile)
+    def saveOptions = new MarkdownSaveOptions()
+    saveOptions.setImagesFolder(assetDir.toString())
+    doc.save(outputFile.toString(), saveOptions)
 
     def originalContent = outputFile.text
     def updatedContent = md_header(title, date) + originalContent
