@@ -749,17 +749,17 @@ hexo-i18n@^2.0.0:
   dependencies:
     sprintf-js "^1.1.2"
 
-hexo-image-link@^0.0.6:
-  version "0.0.6"
-  resolved "https://registry.npmjs.org/hexo-image-link/-/hexo-image-link-0.0.6.tgz#1aec5c01174ae1b42ce6fd2043d266bc2b7f46f2"
-  integrity sha512-/TR3bBwTeu90zWVI6t8Ky33erhZy4dFONWZ/lGWN8qEsGsxvdG/aKYsoLj5ZxvwAWTaS6z6I59lPMdIhDSqw2Q==
-
 hexo-log@^4.0.1:
   version "4.1.0"
   resolved "https://registry.npmjs.org/hexo-log/-/hexo-log-4.1.0.tgz#54b42c250335067b5c60b4137f501607454efda0"
   integrity sha512-i2Sgxk8Cgx5viSjq5qW5N/rBFfwoCKQcH8qnnW1fawCapcdEAhIsq+Y3vbrs9bssyDlyU6Vqm4oQmosREaNI7Q==
   dependencies:
     picocolors "^1.0.0"
+
+hexo-markdown-image@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.npmjs.org/hexo-markdown-image/-/hexo-markdown-image-1.0.5.tgz#c404904898362d72bb9a2efe9d0377dd21abed0e"
+  integrity sha512-oe0+HueIOuhCTsoxN553bGAvv7UpOABGqR7vFEMXeuF9PTgsHY9B1F+t5ptdAZTtc3oUTj8PrP9/JeR5Ry0xZg==
 
 hexo-pagination@3.0.0:
   version "3.0.0"
