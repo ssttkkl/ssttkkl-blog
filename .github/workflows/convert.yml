@@ -1,0 +1,33 @@
+name: Convert Pending Documents
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Groovy
+        uses: WtfJoke/setup-groovy@v2.0.2
+        with:
+          groovy-version: 4.x
+
+      - name: Download Aspose.Words
+        run: |
+          curl http://upload.liuzy88.com/aspose-words-21.1-jdk17-cracked.jar -o aspose-words.jar
+          
+      - name: Run Doc Converter
+        run: |
+          TZ=Asia/Shanghai CLASSPATH=aspose-words.jar scripts/process_pending_doc.sh
+
+      - name: Commit
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Convert Doc
