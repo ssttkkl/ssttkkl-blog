@@ -20,11 +20,7 @@ for file in $doc_files; do
     # 这里假设输出中的路径位于最后一段，并且输出包含 "Created: " 前缀
     created_file=$(echo "$hexo_output" | grep -oP 'Created: \K(.*)')
 
-    classpath=$(cat .classpath)
-    if [-z "$classpath"]; then
-        classpath="."
-    fi
-    groovy -cp $classpath convert_doc.groovy $file source/_posts/$year/$month/$day/$title
+    groovy -cp $CLASSPATH convert_doc.groovy $file source/_posts/$year/$month/$day/$title
 
 done
 
