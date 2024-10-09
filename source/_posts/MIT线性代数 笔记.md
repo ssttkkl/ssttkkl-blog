@@ -4,7 +4,9 @@ date: 2024-10-09 21:20:16
 categories: 学习笔记-数学
 tag: [笔记, 数学, 线性代数]
 ---
-## **MIT线性代数 笔记﻿**
+
+课程视频：https://www.bilibili.com/video/BV1ix411f7Yp
+
 我这比较意识流，更详细的可以参考：https://zhuanlan.zhihu.com/p/45707832
 
 第一&二讲
