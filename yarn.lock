@@ -674,6 +674,11 @@ hasown@^2.0.0, hasown@^2.0.2:
   dependencies:
     function-bind "^1.1.2"
 
+hexo-asset-img@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/hexo-asset-img/-/hexo-asset-img-1.1.0.tgz#8d27096c8538b9f885b3c586b89e11e5bdf1e84e"
+  integrity sha512-vqOEkx2QtvaoV4GJmfJeNpgcYBXFpksFKFhG9EW2R3yZHvihSF5hkfYJXmhtfvsm6KK8NwVEmt39Ji8aQ9ZDSA==
+
 hexo-cli@^4.3.2:
   version "4.3.2"
   resolved "https://registry.npmjs.org/hexo-cli/-/hexo-cli-4.3.2.tgz#7e7d02da137d9fa461a4356964793c56e92b29e6"
@@ -756,11 +761,6 @@ hexo-log@^4.0.1:
   dependencies:
     picocolors "^1.0.0"
 
-hexo-markdown-image@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.npmjs.org/hexo-markdown-image/-/hexo-markdown-image-1.0.5.tgz#c404904898362d72bb9a2efe9d0377dd21abed0e"
-  integrity sha512-oe0+HueIOuhCTsoxN553bGAvv7UpOABGqR7vFEMXeuF9PTgsHY9B1F+t5ptdAZTtc3oUTj8PrP9/JeR5Ry0xZg==
-
 hexo-pagination@3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/hexo-pagination/-/hexo-pagination-3.0.0.tgz#b98b050bbddff25ae646e3d00ad607ac6ae77ea7"
@@ -819,11 +819,6 @@ hexo-theme-butterfly@^5.0.0:
   dependencies:
     hexo-renderer-pug "^3.0.0"
     hexo-renderer-stylus "^3.0.1"
-
-hexo-theme-landscape@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.npmjs.org/hexo-theme-landscape/-/hexo-theme-landscape-1.0.0.tgz#43a549ebb2bea73196200ee4397feb764131a481"
-  integrity sha512-bWQJWMqQI78wWiJPQZq5pJBH20TM442ShCaHGRetuEgMraxH0OKxB3NTupJzNEkzEk8DV2yrdizkXdKN6i501A==
 
 hexo-util@^3.0.1, hexo-util@^3.1.0, hexo-util@^3.3.0:
   version "3.3.0"

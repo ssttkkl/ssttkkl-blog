@@ -29,7 +29,7 @@ def deleteDirectory(File dir) {
 }
 
 // 指定要查找的目录
-def directory = "pending/doc"
+def directory = "pending"
 
 // 使用 Files.walk 递归查找所有 .doc 文件
 def docFiles = []

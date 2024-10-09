@@ -54,6 +54,7 @@ prismjs:
   preprocess: true
   line_number: true
   tab_replace: ''
+post_asset_folder: true
 
 # Home page setting
 # path: Root path for your blogs index page. (default = '')
