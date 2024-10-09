@@ -2,16 +2,12 @@
 
 import com.aspose.words.Document
 import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 import java.text.SimpleDateFormat
 
-// 获取当前日期
-def now = new Date()
-def year = new SimpleDateFormat("yyyy").format(now)
-def month = new SimpleDateFormat("MM").format(now)
-def day = new SimpleDateFormat("dd").format(now)
-
-String md_header(String title) {
-    return "---\ntitle: ${title}\ndate: ${new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(now)}\n---\n"
+String md_header(String title, LocalDateTime date) {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    return "---\ntitle: ${title}\ndate: ${date.format(formatter)}\n---\n"
 }
 
 
@@ -30,6 +26,13 @@ Files.walk(Paths.get(directory)).each { path ->
 docFiles.each { file ->
     println "Processing file: ${file}"
 
+    // 获取文件修改日期
+    def attrs = Files.readAttributes(Paths.get(file), BasicFileAttributes.class)
+    def date = LocalDateTime.ofInstant(attrs.lastModifiedTime().toInstant(), ZoneId.systemDefault())
+    def year = date.getYear()
+    def month = date.getMonthValue()
+    def day = date.getDayOfMonth()
+
     def title = file.getFileName().toString().replace(".doc", "") // 提取文件名作为title
     
     def outputDir = new File("source/_posts/$year/$month/$day/$title")
@@ -47,7 +50,7 @@ docFiles.each { file ->
     tmpOutputFile.renameTo(outputFile)
 
     def originalContent = outputFile.text
-    def updatedContent = md_header(title) + originalContent
+    def updatedContent = md_header(title, date) + originalContent
     outputFile.withWriter('UTF-8') { writer ->
         writer.write(updatedContent)
     }
