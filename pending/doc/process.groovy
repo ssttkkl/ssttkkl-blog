@@ -46,6 +46,12 @@ docFiles.each { file ->
 
     tmpOutputFile.renameTo(outputFile)
 
+    def originalContent = outputFile.text
+    def updatedContent = md_header(title) + originalContent`
+    outputFile.withWriter('UTF-8') { writer ->
+        writer.write(updatedContent)
+    }
+
     // 删除文件
     Files.delete(file)
 }
