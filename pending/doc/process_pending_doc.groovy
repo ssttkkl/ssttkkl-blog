@@ -10,6 +10,11 @@ def year = new SimpleDateFormat("yyyy").format(now)
 def month = new SimpleDateFormat("MM").format(now)
 def day = new SimpleDateFormat("dd").format(now)
 
+String md_header(String title) {
+    return "---\ntitle: ${title}\ndate: ${new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(now)}\n---\n"
+}
+
+
 // 指定要查找的目录
 def directory = "pending/doc"
 
