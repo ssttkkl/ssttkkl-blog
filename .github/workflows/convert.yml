@@ -11,6 +11,9 @@ jobs:
   convert:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@v4
       
@@ -20,12 +23,20 @@ jobs:
           groovy-version: 4.x
 
       - name: Download Aspose.Words
-        run: |
-          curl http://upload.liuzy88.com/aspose-words-21.1-jdk17-cracked.jar -o aspose-words.jar
+        # You may pin to the exact commit or the version.
+        # uses: valadaptive/download-file-action@64a2f7bc6e92976a3ed6bc4c34297ec05f4549b4
+        uses: ethanjli/cached-download-action@v0.1.2
+        with:
+          # The URL to fetch
+          url: http://upload.liuzy88.com/aspose-words-21.1-jdk17-cracked.jar
+          # The path to save the file to. Will be [default directory]/[URL file name] if not provided
+          destination: aspose-words.jar
+          # Additional key to match against when caching the file
+          cache-key: aspose-words-21.1-jdk17
           
       - name: Run Doc Converter
         run: |
-          TZ=Asia/Shanghai CLASSPATH=aspose-words.jar scripts/process_pending_doc.sh
+          TZ=Asia/Shanghai groovy -cp aspose-words.jar pending/doc/process.groovy
 
       - name: Commit
         uses: stefanzweifel/git-auto-commit-action@v4
