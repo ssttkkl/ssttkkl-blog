@@ -38,7 +38,7 @@ jobs:
           
       - name: Run Doc Converter
         run: |
-          TZ=Asia/Shanghai groovy -cp aspose-words.jar pending/doc/process.groovy
+          TZ=Asia/Shanghai groovy -cp aspose-words.jar pending/process.groovy
 
       - name: Commit
         uses: stefanzweifel/git-auto-commit-action@v4
