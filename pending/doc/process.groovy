@@ -29,7 +29,7 @@ docFiles.each { file ->
     println "Processing file: ${file}"
 
     // 获取文件修改日期
-    def attrs = Files.readAttributes(Paths.get($file), BasicFileAttributes.class)
+    def attrs = Files.readAttributes(Paths.get(file.toString()), BasicFileAttributes.class)
     def date = LocalDateTime.ofInstant(attrs.lastModifiedTime().toInstant(), ZoneId.systemDefault())
     def year = date.getYear()
     def month = date.getMonthValue()
