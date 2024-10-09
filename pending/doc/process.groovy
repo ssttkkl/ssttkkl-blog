@@ -42,7 +42,7 @@ docFiles.each { file ->
     def tmpOutputFile = new File(assetDir, "${title}.md")
 
     def doc = new Document(file.toString())
-    doc.save(tmpOutputFile)
+    doc.save(tmpOutputFile.toString())
 
     tmpOutputFile.renameTo(outputFile)
 
