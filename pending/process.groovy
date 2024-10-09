@@ -52,7 +52,7 @@ docFiles.each { file ->
 
     def title = file.getFileName().toString().replace(".doc", "") // 提取文件名作为title
     
-    def outputDir = new File("source/_posts/$year/$month/$day")
+    def outputDir = new File("source/_posts/")
     outputDir.mkdirs()
 
     def assetDir = new File(outputDir, title)
