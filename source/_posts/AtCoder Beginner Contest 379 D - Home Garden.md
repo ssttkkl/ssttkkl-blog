@@ -1,3 +1,8 @@
+---
+title: 【题解】AtCoder Beginner Contest 379 D - Home Garden
+date: 2024-11-18 01:44:09
+---
+
 https://atcoder.jp/contests/abc379/tasks/abc379_d
 
 随着时间流逝所有植物都会长高，实际上只需要记录一个delta，种植新植物时高度计为-delta，查询时将查询值减去这个delta再查即可。
