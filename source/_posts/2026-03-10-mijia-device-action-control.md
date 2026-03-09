@@ -1,13 +1,13 @@
 ---
-title: 米家洗衣机API踩坑记
+title: 米家洗衣机API踩坑记：从问题到OpenClaw Skill
 date: 2026-03-10 02:47:00
 categories: 技术
-tags: [智能家居, Python, 米家, API, 自动化]
+tags: [智能家居, Python, 米家, API, 自动化, OpenClaw]
 ---
 
-## 问题
+## 背景
 
-想用API启动米家洗衣机，结果发现没那么简单。
+想用API启动米家洗衣机，结果发现没那么简单。最后把整个流程做成了 OpenClaw 的 mijia skill，现在可以直接通过 AI Agent 控制米家设备。
 
 ## 第一次尝试
 
@@ -85,6 +85,27 @@ uvx mijiaapi --get_device_info <model>
 ## 总结
 
 米家设备的"开机"和"启动"是两回事。复杂操作要调用动作，不是设置属性。CLI工具功能有限，得用Python API。
+
+## OpenClaw Skill
+
+基于这个经验，开发了 [mijia skill](https://github.com/ssttkkl/mijia-skill)，可以通过 OpenClaw AI Agent 直接控制米家设备：
+
+```bash
+# 安装技能
+npx clawhub@latest install mijia
+
+# 使用示例
+"打开暖风机开到22度"
+"启动洗衣机"
+"查看设备状态"
+```
+
+技能特点：
+- 自动处理设备查询和动作调用
+- 支持多种米家设备（暖风机、洗衣机、香薰机等）
+- AI Agent 可以理解自然语言指令
+
+现在不用写代码，直接说话就能控制米家设备了。
 
 ## 参考
 
