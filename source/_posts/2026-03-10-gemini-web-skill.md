@@ -11,7 +11,7 @@ tags: [OpenClaw, AI, Gemini, 图像生成, Skill开发]
 
 ## 方案
 
-逆向 Gemini Web，开发 `gemini-web` 技能，让 OpenClaw 直接调用。
+基于开源库 [gemini-webapi](https://github.com/HanaokaYuzu/Gemini-API) 逆向 Gemini Web，开发 `gemini-web` 技能，让 OpenClaw 直接调用。
 
 ## 实现
 
@@ -129,4 +129,5 @@ def generate_with_retry(prompt, max_retries=3):
 ## 参考
 
 - [gemini-web skill](https://clawhub.com/skills/gemini-web)
+- [gemini-webapi](https://github.com/HanaokaYuzu/Gemini-API) - 开源逆向库
 - Gemini: https://gemini.google.com/
