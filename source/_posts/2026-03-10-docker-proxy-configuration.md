@@ -7,15 +7,15 @@ tags: [Docker, 代理, Linux, 运维]
 
 ## 问题
 
-国内拉取 ghcr.io 的镜像经常超时或速度很慢。
+国内拉 ghcr.io 的镜像经常超时或慢得要死。
 
 ## 注意：Docker不支持SOCKS5
 
-Docker 的 `HTTP_PROXY` 只支持 `http://` 和 `https://`，不支持 `socks5://`。
+Docker 的 `HTTP_PROXY` 只认 `http://` 和 `https://`，不认 `socks5://`。
 
-如果只有 SOCKS5 代理：
-1. 用支持 HTTP 的代理工具（如 Clash）
-2. 或用 privoxy 转换
+只有 SOCKS5 代理的话：
+1. 用支持 HTTP 的代理工具（比如 Clash）
+2. 或者用 privoxy 转一下
 
 ## 配置步骤
 
@@ -71,6 +71,6 @@ sudo systemctl restart privoxy
 
 ## 注意
 
-1. 确保代理服务在运行
-2. 端口号要对
+1. 确保代理服务在跑
+2. 端口号别搞错
 3. 改完配置必须重启Docker

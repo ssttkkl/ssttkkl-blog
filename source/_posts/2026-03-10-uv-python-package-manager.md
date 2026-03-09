@@ -43,7 +43,7 @@ uv pip install "django>=4.0"
 
 ### 运行脚本
 
-不用激活环境，直接运行：
+不用激活环境，直接跑：
 
 ```bash
 uv run python script.py
@@ -94,10 +94,10 @@ uv pip install package
 
 ## 注意
 
-1. 还在快速迭代，API 可能变化
+1. 还在快速迭代，API 可能变
 2. 某些复杂依赖可能有问题
 3. 遇到问题可以回退到 pip
 
 ## 总结
 
-uv 速度快、兼容 pip、值得一试。特别适合 CI/CD 环境和频繁安装依赖的场景。
+uv 速度快、兼容 pip、值得试试。特别适合 CI/CD 环境和频繁安装依赖的场景。

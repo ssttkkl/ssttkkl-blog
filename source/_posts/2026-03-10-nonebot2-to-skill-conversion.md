@@ -7,7 +7,7 @@ tags: [NoneBot2, OpenClaw, Python, 插件开发, 转换]
 
 ## 背景
 
-NoneBot2 是流行的 Python 聊天机器人框架，但插件只能在 NoneBot2 环境运行。如果想把插件逻辑提取出来，做成独立的 CLI 工具或 AI Agent 技能，就需要转换。
+NoneBot2 是流行的 Python 聊天机器人框架，但插件只能在 NoneBot2 环境跑。想把插件逻辑提取出来，做成独立的 CLI 工具或 AI Agent 技能，就需要转换。
 
 ## 核心思路
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
 ### 4. 保留异步
 
-不要把 async 改成同步！用 `asyncio.run()` 包装：
+别把 async 改成同步！用 `asyncio.run()` 包装：
 
 ```python
 def main():
@@ -181,4 +181,4 @@ NoneBot2 插件转 CLI 的核心是：
 - 保留异步代码
 - 改用标准参数解析
 
-转换后的代码更通用，可以在任何 Python 环境运行。
+转换后的代码更通用，可以在任何 Python 环境跑。

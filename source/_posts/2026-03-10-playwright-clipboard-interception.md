@@ -1,5 +1,5 @@
 ---
-title: Playwright拦截剪贴板操作获取网页复制内容
+title: Playwright拦截剪贴板获取网页复制内容
 date: 2026-03-10 02:52:00
 categories: 技术
 tags: [Playwright, 自动化, JavaScript, 爬虫]
@@ -9,7 +9,7 @@ tags: [Playwright, 自动化, JavaScript, 爬虫]
 
 网页用 `navigator.clipboard.writeText()` 写剪贴板，怎么在 Playwright 里拦截并获取内容？
 
-## 解决方法：addInitScript
+## 解决方法
 
 用 `page.addInitScript()` 在页面加载前注入代码，覆盖剪贴板 API。
 
@@ -54,7 +54,7 @@ const { chromium } = require('playwright');
 
 ## 数据传递
 
-通过 `window` 对象传递：
+通过 `window` 对象传：
 
 ```javascript
 // 注入脚本
@@ -97,6 +97,6 @@ async function getTaobaoRebate(keyword) {
 
 ## 注意
 
-1. 某些网站可能检测 API 覆盖
+1. 有些网站可能检测 API 覆盖
 2. `writeText` 返回 Promise，要正确处理
 3. 主要针对 Chromium 内核
