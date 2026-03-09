@@ -159,7 +159,31 @@ Use when:
 
 1. **自动分类** - 根据内容自动选择 categories
 2. **预览模式** - 提交前让用户确认
-3. **定期触发** - 通过 Hook 每周自动生成
+3. **定期触发** - 通过 Cron 每周自动生成 ✅
+
+### 定时任务配置
+
+使用 OpenClaw Cron 实现每周自动发布：
+
+```bash
+openclaw cron add \
+  --name "weekly-blog-generation" \
+  --description "每周自动从对话生成博客文章" \
+  --cron "0 10 * * 1" \
+  --announce \
+  --channel qqbot \
+  --to "user:01F92D453188CECB1EA2EA916F286C58" \
+  --account default \
+  --message "从最近7天的对话记录中提取有价值的技术内容，生成博客文章并发布到 ssttkkl-blog 仓库。重点关注 OpenClaw 技能开发、AI 自动化、vibe coding 等高优先级主题。使用 conversation-to-blog 技能完成任务。"
+```
+
+**配置说明**：
+- 每周一上午 10:00 执行
+- 自动提取最近 7 天对话
+- 优先处理高价值主题
+- 完成后通过 QQ 通知
+
+现在完全自动化了，每周一早上醒来就能看到新发布的博客。
 
 ## 总结
 
