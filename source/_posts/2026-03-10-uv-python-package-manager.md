@@ -50,7 +50,7 @@ uv run python script.py
 uv run pytest
 ```
 
-## 实际案例：米家API
+## 实际案例
 
 在米家智能家居控制中用 uv：
 
@@ -67,9 +67,9 @@ uv run python control_washer.py
 
 ## 为什么快
 
-- 用 Rust 写的，编译后执行
+- Rust 写的，编译后执行
 - 并行下载和安装
-- 更好的依赖解析算法
+- 更好的依赖解析
 - 缓存机制
 
 ## 对比
@@ -100,4 +100,4 @@ uv pip install package
 
 ## 总结
 
-uv 速度快、兼容 pip、值得试试。特别适合 CI/CD 环境和频繁安装依赖的场景。
+uv 速度快、兼容 pip、值得试试。特别适合 CI/CD 和频繁安装依赖的场景。
