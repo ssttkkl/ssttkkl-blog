@@ -1,66 +1,92 @@
 ---
-title: NoneBot2插件转OpenClaw Skill完整指南
+title: NoneBot2插件转OpenClaw Skill：AI Agent工作流
 date: 2026-03-10 03:02:00
 categories: 技术
-tags: [NoneBot2, OpenClaw, Python, 转换, Skill开发]
+tags: [NoneBot2, OpenClaw, AI, Skill开发, 自动化]
 ---
 
 ## 背景
 
-NoneBot2 插件只能在机器人框架里跑，想提取成独立 CLI 工具需要系统化的转换方法。
+NoneBot2 插件只能在机器人框架里跑，想提取成独立 CLI 工具。手动转换容易出错，能不能让 AI Agent 来做？
 
 ## 方案
 
-开发 `nonebot-plugin-to-skill` 技能，提供完整的转换指南，包含所有 NoneBot2 模式的转换规则。
+开发 `nonebot-plugin-to-skill` 技能，让 AI Agent 按照系统化流程完成转换。
 
-### 转换流程
+### AI Agent 工作流
 
 ```mermaid
 flowchart TD
-    A[克隆项目] --> B[识别结构]
-    B --> C[提取命令]
-    C --> D[转换代码]
-    D --> E[生成技能]
-    E --> F[测试验证]
+    A[用户：转换这个插件] --> B[Agent读取技能文档]
+    B --> C[克隆项目]
+    C --> D[分析项目结构]
+    D --> E[识别命令模式]
+    E --> F[应用转换规则]
+    F --> G[生成CLI脚本]
+    G --> H[创建技能结构]
+    H --> I[测试验证]
 ```
 
-## 核心内容
+## 技能设计
 
-### 1. 项目识别
+### 1. 为什么需要技能
 
-使用 grep 检测 NoneBot2 特征：
+AI Agent 需要：
+- **系统化流程**：按步骤执行，不遗漏
+- **模式库**：识别各种 NoneBot2 命令类型
+- **转换规则**：知道如何改写代码
+- **最佳实践**：包管理、异步保留
 
-```bash
-# 检查依赖
-grep -E "nonebot2|nonebot-adapter" requirements.txt pyproject.toml
+### 2. 技能内容
 
-# 查找命令处理器
-grep -r "on_command\|on_message\|on_regex" --include="*.py" -l
+**Phase 1: 项目识别**
 
-# 列出源文件
-find . -name "*.py" -type f | grep -E "(plugin|command|bot)"
-```
+Agent 需要判断：
+- 这是不是 NoneBot2 项目？
+- 项目结构是什么样的？
+- 入口文件在哪？
 
-### 2. 转换模式库
+技能提供检测方法和典型结构。
 
-技能提供完整的转换规则：
+**Phase 2: 命令提取**
 
-**Pattern 1: on_command**
+Agent 需要找到：
+- 有哪些命令？
+- 每个命令的参数是什么？
+- Handler 函数在哪？
+
+技能提供所有 NoneBot2 命令模式（on_command、on_regex、on_message）。
+
+**Phase 3: 代码转换**
+
+Agent 需要知道：
+- `CommandArg()` 改成什么？
+- `await matcher.finish()` 改成什么？
+- 异步代码怎么保留？
+
+技能提供完整转换规则表。
+
+**Phase 4: 技能生成**
+
+Agent 需要创建：
+- 标准目录结构
+- SKILL.md 文档
+- pyproject.toml 配置
+
+技能提供模板和规范。
+
+### 3. 转换规则示例
+
+**on_command 转换**：
 
 ```python
-# 原代码
+# Agent 看到这个
 cmd = on_command("ping")
-
 @cmd.handle()
-async def handle_ping(args: Message = CommandArg()):
+async def handle(args: Message = CommandArg()):
     await cmd.finish(f"Pong! {args.extract_plain_text()}")
-```
 
-```python
-# 转换后
-import argparse
-import asyncio
-
+# 技能告诉 Agent 改成这个
 async def ping(message=None):
     print(f"Pong! {message}")
 
@@ -71,130 +97,88 @@ def main():
     asyncio.run(ping(args.message))
 ```
 
-**转换规则**：
-- `CommandArg()` → `parser.add_argument()`
-- `await matcher.finish()` → `print()`
-- `aliases` → 文档说明，不创建多个文件
+**为什么这样转换**：
+- 保留异步函数（避免重写业务逻辑）
+- 用 argparse 替代 NoneBot2 参数系统
+- print 替代消息发送（CLI 环境）
+- asyncio.run 包装（标准 Python 模式）
 
-**Pattern 2: on_regex**
+## 实战：雀魂插件转换
 
-```python
-# 原代码
-matcher = on_regex(r"pattern (?P<name>\w+)")
+用户说："转换 nonebot-plugin-majsoul"
 
-@matcher.handle()
-async def handle_match():
-    await matcher.finish("Matched!")
-```
+**Agent 执行流程**：
 
-```python
-# 转换后
-import re
+1. **读取技能** - 加载转换规则
+2. **克隆项目** - 获取源码
+3. **分析结构** - 发现 4 个命令
+4. **识别模式** - 都是 on_command
+5. **提取逻辑** - 找到 API 调用代码
+6. **生成脚本** - 创建 4 个 CLI 文件
+7. **配置依赖** - 生成 pyproject.toml
+8. **写文档** - 生成 SKILL.md
 
-async def regex_handler(text: str):
-    match = re.search(r"pattern (?P<name>\w+)", text)
-    if match:
-        print("Matched!")
-    else:
-        print("No match")
-```
-
-**Pattern 3: on_message**
-
-```python
-# 原代码
-matcher = on_message(rule=keyword("keyword"))
-
-@matcher.handle()
-async def handle_msg():
-    await matcher.finish("Reply")
-```
-
-```python
-# 转换后
-async def message_handler(text: str):
-    if "keyword" in text:
-        print("Reply")
-```
-
-### 3. 转换规则表
-
-| NoneBot2 | CLI |
-|----------|-----|
-| `CommandArg()` | `parser.add_argument()` |
-| `await matcher.finish()` | `print()` |
-| `await matcher.send()` | `print()` |
-| `Event.get_user_id()` | 命令行参数 |
-| `matcher.set_arg()` | 本地变量 |
-
-### 4. 包管理
-
-技能要求必须使用包管理器（uv/pdm/poetry）：
-
-```toml
-[project]
-name = "skill-name"
-dependencies = ["httpx>=0.24.0"]
-
-[project.scripts]
-cmd1 = "scripts.cmd1:main"
-```
-
-### 5. 保留异步
-
-关键原则：不改 async/await，只包装入口
-
-```python
-# 保留原有异步函数
-async def handler():
-    result = await api_call()
-    return result
-
-# 添加同步入口
-def main():
-    asyncio.run(handler())
-```
-
-## 实战案例
-
-技能文档包含完整的雀魂插件转换案例：
-
-**原项目**：`nonebot-plugin-majsoul`
-
-**命令提取**：
-- `majsoul_info` (4人麻将)
-- `majsoul_3p_info` (3人麻将)
-- `majsoul_pt_plot` (PT走势)
-
-**转换结果**：
+**结果**：
 ```
 majsoul-cli/
 ├── SKILL.md
 ├── scripts/
 │   ├── majsoul-info.py
-│   └── majsoul-pt.py
+│   ├── majsoul-3p-info.py
+│   ├── majsoul-pt.py
+│   └── majsoul-records.py
 └── pyproject.toml
 ```
 
+## 为什么这样设计
+
+### 1. 系统化流程
+
+AI Agent 需要明确的步骤，不能靠"猜"。技能提供：
+- 检查清单
+- 决策树
+- 转换规则
+
+### 2. 模式识别
+
+NoneBot2 有多种命令类型，技能提供：
+- 所有模式的示例
+- 识别特征
+- 转换方法
+
+### 3. 保留核心逻辑
+
+转换不是重写，技能强调：
+- 保留异步代码
+- 只改接口层
+- 不动业务逻辑
+
+### 4. 标准化输出
+
+技能规定：
+- 必须用包管理器
+- 统一目录结构
+- 标准文档格式
+
 ## 技能价值
 
-1. **完整模式库**：覆盖所有 NoneBot2 命令类型
-2. **详细示例**：每个模式都有转换前后对比
-3. **最佳实践**：包管理、异步保留、错误处理
-4. **实战案例**：真实项目转换全流程
+不是自动化工具，是 **AI Agent 的操作手册**：
+- 告诉 Agent 做什么
+- 告诉 Agent 怎么做
+- 告诉 Agent 为什么这样做
 
 ## 总结
 
-这个技能是一份详尽的转换指南，不是自动化工具。通过：
-- grep 快速定位
-- 模式库对照转换
-- 保留异步结构
-- 标准化技能结构
+`nonebot-plugin-to-skill` 是一份详尽的转换指南，让 AI Agent 能够系统化地完成 NoneBot2 到 OpenClaw 的转换。关键是提供：
+- 清晰的工作流程
+- 完整的模式库
+- 明确的转换规则
+- 标准化的输出
 
-提供了系统化的 NoneBot2 到 OpenClaw 转换方法。
+AI Agent 按照技能指导，就能完成复杂的代码转换任务。
 
 ## 参考
 
 - [nonebot-plugin-to-skill](https://github.com/yourusername/nonebot-plugin-to-skill)
-- [NoneBot2 文档](https://nonebot.dev/docs/advanced/matcher)
+- [NoneBot2 文档](https://nonebot.dev/)
 - [nonebot-plugin-majsoul](https://github.com/ssttkkl/nonebot-plugin-majsoul)
