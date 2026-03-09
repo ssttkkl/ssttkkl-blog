@@ -14,6 +14,18 @@ NoneBot2 是流行的 Python 聊天机器人框架，但插件只能在 NoneBot2
 NoneBot2 插件 = 命令处理器 + 消息响应
 OpenClaw Skill = CLI 脚本 + 核心逻辑
 
+### 转换流程
+
+```mermaid
+flowchart TD
+    A[NoneBot2项目] --> B[识别项目结构]
+    B --> C[提取命令]
+    C --> D[转成CLI]
+    D --> E[保留异步]
+    E --> F[生成技能结构]
+    F --> G[OpenClaw Skill]
+```
+
 转换就是：
 1. 提取命令处理逻辑
 2. 去掉 NoneBot2 依赖

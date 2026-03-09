@@ -102,12 +102,18 @@ uv run gemini-web generate "描述这张图片" --file photo.jpg
 "生成图片：赛博朋克城市夜景"
 ```
 
-Agent 会：
-1. 识别生图需求
-2. 调用 gemini-web 技能
-3. 执行 CLI 命令
-4. 获取生成的图片
-5. 通过 message 工具发送给用户
+### 执行流程
+
+```mermaid
+flowchart TD
+    A[用户请求生图] --> B{Agent识别需求}
+    B --> C[调用gemini-web技能]
+    C --> D[执行CLI命令]
+    D --> E[Gemini生成图片]
+    E --> F[保存到本地]
+    F --> G[通过message发送]
+    G --> H[用户收到图片]
+```
 
 ## 关键技术
 
