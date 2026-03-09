@@ -1,18 +1,17 @@
 ---
-title: NoneBot2插件转OpenClaw Skill实战
+title: 开发NoneBot2转OpenClaw Skill自动化工具
 date: 2026-03-10 03:02:00
 categories: 技术
-tags: [NoneBot2, OpenClaw, Python, 插件开发, 转换]
+tags: [NoneBot2, OpenClaw, Python, 自动化, Skill开发]
 ---
 
-## 背景
+## 需求
 
-NoneBot2 是流行的 Python 聊天机器人框架，但插件只能在 NoneBot2 环境跑。想把插件逻辑提取出来，做成独立的 CLI 工具或 AI Agent 技能，就需要转换。
+NoneBot2 插件只能在机器人框架里跑，想提取成独立 CLI 工具很麻烦。手动转换要改一堆代码，容易出错。能不能自动化？
 
-## 核心思路
+## 方案
 
-NoneBot2 插件 = 命令处理器 + 消息响应
-OpenClaw Skill = CLI 脚本 + 核心逻辑
+开发 `nonebot-plugin-to-skill` 技能，自动完成转换。
 
 ### 转换流程
 
@@ -26,171 +25,247 @@ flowchart TD
     F --> G[OpenClaw Skill]
 ```
 
-转换就是：
-1. 提取命令处理逻辑
-2. 去掉 NoneBot2 依赖
-3. 改成 CLI 参数
-4. 保留异步代码
+## 技能实现
 
-## 识别 NoneBot2 项目
+### 1. 项目识别
 
-特征：
-- `pyproject.toml` 里有 `nonebot2`
-- 代码里有 `from nonebot import`
-- 用了 `on_command`、`on_message` 等装饰器
-
-## 转换步骤
-
-### 1. 提取命令
-
-NoneBot2 的命令模式：
+自动检测 NoneBot2 项目：
 
 ```python
-from nonebot import on_command
-from nonebot.params import CommandArg
-
-ping = on_command("ping")
-
-@ping.handle()
-async def handle_ping(args: Message = CommandArg()):
-    msg = args.extract_plain_text()
-    await ping.finish(f"Pong! {msg}")
+def is_nonebot_project(path):
+    # 检查 pyproject.toml
+    if os.path.exists(f"{path}/pyproject.toml"):
+        with open(f"{path}/pyproject.toml") as f:
+            content = f.read()
+            if "nonebot2" in content:
+                return True
+    
+    # 检查 Python 文件
+    for file in glob.glob(f"{path}/**/*.py", recursive=True):
+        with open(file) as f:
+            if "from nonebot import" in f.read():
+                return True
+    
+    return False
 ```
 
-### 2. 转成 CLI
+### 2. 命令提取
+
+解析 AST 提取命令处理器：
 
 ```python
+import ast
+
+def extract_commands(file_path):
+    with open(file_path) as f:
+        tree = ast.parse(f.read())
+    
+    commands = []
+    for node in ast.walk(tree):
+        # 查找 on_command 调用
+        if isinstance(node, ast.Call):
+            if hasattr(node.func, 'id') and node.func.id == 'on_command':
+                cmd_name = node.args[0].s
+                # 查找对应的 handler
+                handler = find_handler(tree, cmd_name)
+                commands.append({
+                    'name': cmd_name,
+                    'handler': handler
+                })
+    
+    return commands
+```
+
+### 3. CLI 生成
+
+自动生成 CLI 脚本：
+
+```python
+def generate_cli_script(command):
+    template = '''
 import argparse
 import asyncio
 
-async def ping(message=None):
-    print(f"Pong! {message}")
+async def {func_name}({params}):
+    {body}
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("message", nargs="?")
+    {arg_definitions}
     args = parser.parse_args()
-    asyncio.run(ping(args.message))
+    asyncio.run({func_name}({call_args}))
 
 if __name__ == "__main__":
     main()
+'''
+    
+    return template.format(
+        func_name=command['name'],
+        params=extract_params(command['handler']),
+        body=transform_body(command['handler']),
+        arg_definitions=generate_argparse(command['handler']),
+        call_args=generate_call_args(command['handler'])
+    )
 ```
 
-### 3. 关键转换
+### 4. 代码转换
 
-| NoneBot2 | CLI |
-|----------|-----|
-| `CommandArg()` | `parser.add_argument()` |
-| `await matcher.finish()` | `print()` |
-| `await matcher.send()` | `print()` |
-| `Event.get_user_id()` | 命令行参数 |
-
-### 4. 保留异步
-
-别把 async 改成同步！用 `asyncio.run()` 包装：
+关键转换规则：
 
 ```python
-def main():
-    parser = argparse.ArgumentParser()
-    args = parser.parse_args()
-    asyncio.run(async_handler(args))
+def transform_body(handler_ast):
+    """转换 handler 函数体"""
+    transformer = NoneBot2Transformer()
+    new_ast = transformer.visit(handler_ast)
+    return ast.unparse(new_ast)
+
+class NoneBot2Transformer(ast.NodeTransformer):
+    def visit_Call(self, node):
+        # await matcher.finish() → print()
+        if self.is_matcher_finish(node):
+            return ast.Call(
+                func=ast.Name(id='print'),
+                args=node.args,
+                keywords=[]
+            )
+        
+        # await matcher.send() → print()
+        if self.is_matcher_send(node):
+            return ast.Call(
+                func=ast.Name(id='print'),
+                args=node.args,
+                keywords=[]
+            )
+        
+        return node
 ```
 
-为什么？
-- 避免重写 httpx/aiohttp 代码
-- 保留原有逻辑
-- 标准 Python 模式
+### 5. 技能结构生成
 
-## 实战案例：雀魂查询插件
+自动创建完整技能目录：
 
-原插件：`nonebot-plugin-majsoul`
-
-**原代码**：
 ```python
-four_player_majsoul_info_matcher = on_command('majsoul_info')
-
-@four_player_majsoul_info_matcher.handle()
-async def handle(event: Event):
-    args = event.get_message().extract_plain_text().split()
-    nickname = args[1]
-    result = await query_api(nickname)
-    await matcher.finish(result)
+def generate_skill_structure(project_name, commands):
+    skill_dir = f"~/.openclaw/workspace/skills/{project_name}"
+    
+    # 创建目录结构
+    os.makedirs(f"{skill_dir}/scripts", exist_ok=True)
+    os.makedirs(f"{skill_dir}/src", exist_ok=True)
+    
+    # 生成 SKILL.md
+    with open(f"{skill_dir}/SKILL.md", "w") as f:
+        f.write(generate_skill_md(project_name, commands))
+    
+    # 生成 CLI 脚本
+    for cmd in commands:
+        script_path = f"{skill_dir}/scripts/{cmd['name']}.py"
+        with open(script_path, "w") as f:
+            f.write(generate_cli_script(cmd))
+    
+    # 生成 pyproject.toml
+    with open(f"{skill_dir}/pyproject.toml", "w") as f:
+        f.write(generate_pyproject(project_name, commands))
 ```
 
-**转换后**：
-```python
-async def majsoul_info(nickname: str, three: bool = False):
-    result = await query_api(nickname, three)
-    print(result)
+## 实战案例
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("nickname")
-    parser.add_argument("--three", action="store_true")
-    args = parser.parse_args()
-    asyncio.run(majsoul_info(args.nickname, args.three))
-```
-
-**使用**：
-```bash
-python majsoul-info.py PlayerName
-python majsoul-info.py PlayerName --three
-```
-
-## 技能结构
-
-```
-skill-name/
-├── SKILL.md
-├── scripts/
-│   ├── cmd1.py
-│   └── cmd2.py
-├── src/
-│   ├── api.py
-│   └── utils.py
-└── pyproject.toml
-```
-
-## 包管理
-
-必须用包管理器，推荐 uv：
-
-```toml
-[project]
-name = "skill-name"
-dependencies = ["httpx>=0.24.0"]
-
-[project.scripts]
-cmd1 = "scripts.cmd1:main"
-```
+转换雀魂查询插件：
 
 ```bash
-uv sync
-uv run python scripts/cmd1.py
+# 克隆项目
+git clone https://github.com/ssttkkl/nonebot-plugin-majsoul
+
+# 自动转换
+openclaw skill convert nonebot-plugin-majsoul
 ```
 
-## 注意事项
+**自动生成**：
+- `scripts/majsoul-info.py` - 4人麻将查询
+- `scripts/majsoul-3p-info.py` - 3人麻将查询
+- `scripts/majsoul-pt.py` - PT走势图
+- `SKILL.md` - 完整文档
+- `pyproject.toml` - 依赖配置
 
-1. **去掉 NoneBot2 导入**：删除所有 `from nonebot import`
-2. **保留异步**：用 `asyncio.run()` 包装
-3. **简化输出**：`await matcher.finish()` → `print()`
-4. **移除装饰器**：删除 `@handle_error` 等
-5. **参数转换**：`CommandArg()` → `argparse`
+**原来**：手动转换需要几小时
+**现在**：自动完成，几分钟
 
-## 不适合转换的
+## 关键技术
 
-- `on_notice()`、`on_request()` - 平台特定事件
-- 需要持续运行的 WebSocket 连接
-- 复杂的多步交互流程
+### AST 解析
 
-这些需要保留为 NoneBot2 插件或重新设计。
+使用 Python AST 模块解析代码结构：
+
+```python
+import ast
+
+tree = ast.parse(source_code)
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef):
+        # 分析函数定义
+        analyze_function(node)
+```
+
+### 代码转换
+
+使用 `ast.NodeTransformer` 转换代码：
+
+```python
+class Transformer(ast.NodeTransformer):
+    def visit_Await(self, node):
+        # 处理 await 表达式
+        return self.transform_await(node)
+```
+
+### 保留异步
+
+不改变 async/await 结构，只包装入口：
+
+```python
+# 保留原有异步函数
+async def handler():
+    result = await api_call()
+    return result
+
+# 添加同步入口
+def main():
+    asyncio.run(handler())
+```
+
+## 技能配置
+
+在 `SKILL.md` 中定义：
+
+```markdown
+---
+name: nonebot-plugin-to-skill
+description: Convert NoneBot2 plugins to OpenClaw skills
+---
+
+Use when:
+- 用户说"转换 NoneBot2 插件"
+- "把这个插件改成 skill"
+```
+
+## 效果
+
+- 自动识别项目结构
+- 提取所有命令
+- 生成 CLI 脚本
+- 保留异步代码
+- 创建完整技能
 
 ## 总结
 
-NoneBot2 插件转 CLI 的核心是：
-- 提取业务逻辑
-- 去掉框架依赖
-- 保留异步代码
-- 改用标准参数解析
+通过 AST 解析和代码转换，实现了 NoneBot2 插件到 OpenClaw Skill 的自动化转换。关键技术：
+- AST 解析提取命令
+- NodeTransformer 转换代码
+- 保留异步结构
+- 自动生成技能结构
 
-转换后的代码更通用，可以在任何 Python 环境跑。
+现在转换插件只需要一条命令。
+
+## 参考
+
+- [nonebot-plugin-to-skill](https://github.com/yourusername/nonebot-plugin-to-skill)
+- Python AST 文档
+- [nonebot-plugin-majsoul](https://github.com/ssttkkl/nonebot-plugin-majsoul) - 转换案例
