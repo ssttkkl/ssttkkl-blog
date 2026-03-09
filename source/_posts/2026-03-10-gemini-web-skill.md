@@ -23,6 +23,32 @@ gemini-web/
 └── src/                  # 核心逻辑
 ```
 
+## CLI 工具实现
+
+技能基于 `gemini-webapi` Python 包，通过 `uv` 管理依赖：
+
+### pyproject.toml
+
+```toml
+[project]
+name = "gemini-web"
+version = "1.0.0"
+dependencies = [
+    "gemini-webapi>=2.4.0",
+    "browser-cookie3>=0.19.1"
+]
+
+[project.scripts]
+gemini-web = "gemini_webapi.cli:main"
+```
+
+### 核心依赖
+
+- **gemini-webapi** - 逆向 Gemini Web 的 Python 库
+- **browser-cookie3** - 从浏览器读取 Cookie
+
+安装后可以直接用 `uv run gemini-web` 命令。
+
 ## 核心功能
 
 ### 1. Cookie 管理
