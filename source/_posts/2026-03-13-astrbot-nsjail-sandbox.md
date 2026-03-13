@@ -1,6 +1,6 @@
 ---
 title: 构建 Skill-First Agent：基于 AstrBot 和 NsJail 的安全沙箱实践
-date: 2026-03-13 21:48:00
+date: 2026-03-13 21:52:00
 categories:
   - 技术
   - AI Agent
@@ -30,19 +30,25 @@ AstrBot 是一个多平台聊天机器人框架，支持 QQ、Telegram、Discord
 我的选择：**NsJail** - Google 开源的轻量级沙箱工具，基于 Linux Namespace 和 Cgroup，毫秒级启动。
 
 
-## 第一个问题：Docker 权限
+## 第一个问题：Docker 权限与用户命名空间
 
-### 尝试 1：最简单的方案
+### 尝试 1：Privileged 模式
 
 ```yaml
-services:
-  astrbot:
-    privileged: true
+privileged: true
 ```
 
 能工作，但安全风险太大。
 
-### 尝试 2：精细化权限
+### 尝试 2：用户命名空间映射
+
+配置 `/etc/subuid` 和 `/etc/subgid`，使用 `--uid_mapping` 和 `--gid_mapping`。
+
+**失败**：`newgidmap: Operation not permitted`
+
+**原因**：Docker 的 `privileged` 模式与用户命名空间不兼容。
+
+### 尝试 3：精细化权限
 
 ```yaml
 cap_add:
@@ -53,29 +59,43 @@ security_opt:
   - seccomp=unconfined
 ```
 
-启动 nsjail，报错：
+配合 `--disable_clone_newuser`，使用固定 UID 99999。
 
-```bash
-[E] clone(flags=CLONE_NEWUSER) failed: Operation not permitted
+**成功**！但有警告：进程在全局命名空间中仍映射为 root。
+
+### 权衡
+
+放弃用户命名空间，换取：
+- 更简单的部署
+- 更好的兼容性
+- 基本的安全隔离（通过 chroot 和固定 UID）
+
+
+## 第二个问题：Session ID 特殊字符
+
+### 问题发现
+
+nsjail 挂载失败，报错不明确。
+
+### 调试过程
+
+检查 session_id：包含冒号、感叹号等特殊字符（来自 QQ 消息 ID）。
+
+### 解决方案
+
+```python
+clean_session_id = re.sub(r'[^a-zA-Z0-9_-]', '_', session_id)
+sandbox_dir = tempfile.mkdtemp(prefix=f'nsjail_{clean_session_id}_')
 ```
 
-**原因**：Docker 的 `privileged` 模式与用户命名空间不兼容。
-
-### 解决方案：禁用用户命名空间
-
-```bash
---disable_clone_newuser
---user 99999 --group 99999
-```
-
-**权衡**：放弃用户命名空间，换取更简单的部署。
+**教训**：文件路径中的特殊字符会导致挂载失败。
 
 
-## 第二个问题：如何提供软件环境？
+## 第三个问题：如何提供软件环境？
 
-### 尝试 1：创建 Chroot 环境
+### 尝试 1：Chroot 环境
 
-创建一个完整的 chroot 环境，包含所有系统目录。
+创建 `/nsjail-root`，包含完整的系统目录。
 
 **问题**：
 - 占用 1.2GB 磁盘空间
@@ -83,8 +103,6 @@ security_opt:
 - 更新麻烦
 
 ### 尝试 2：Bindmount 复用宿主软件
-
-突然意识到：为什么不直接复用宿主的软件？
 
 ```bash
 --bindmount /usr:/usr:ro
@@ -98,16 +116,16 @@ security_opt:
 - 自动同步更新
 - 沙箱内直接使用 Python、Node.js、Git 等
 
-**最终方案**：Bindmount
+**最终选择**：Bindmount
 
 
-## 第三个问题：网络隔离
+## 第四个问题：网络隔离
 
-### 尝试 1：使用 --disable_clone_newnet
+### 误区
 
-以为这样就能"禁用网络"。
+以为 `--disable_clone_newnet` 是"禁用网络"。
 
-**实际效果**：共享宿主网络，完全没有隔离。
+**实际**：是"不创建网络命名空间"，即共享宿主网络。
 
 ### 正确理解
 
@@ -120,31 +138,28 @@ security_opt:
 if enable_network:
     nsjail_args.append("--disable_clone_newnet")
     nsjail_args.extend(["--bindmount", "/etc/resolv.conf:/etc/resolv.conf:ro"])
-# 否则：默认创建隔离的网络命名空间
 ```
 
+默认断网，按需启用。
 
-## 第四个问题：Node.js OOM
 
-### 尝试 1：使用 rlimit_as 限制内存
+## 第五个问题：Node.js OOM
+
+### 尝试 1：rlimit_as 限制内存
 
 ```bash
---rlimit_as 512  # 限制 512MB
+--rlimit_as 512
 ```
 
-Node.js 直接崩溃：
-
-```
-# Allocation failed - JavaScript heap out of memory
-```
+Node.js 崩溃：`JavaScript heap out of memory`
 
 ### 问题分析
 
-- `--rlimit_as` 限制的是**虚拟内存**
+- `rlimit_as` 限制**虚拟内存**
 - V8 引擎初始化需要大量虚拟内存（JIT、GC）
 - 即使实际使用很少物理内存，虚拟内存限制也会导致失败
 
-### 尝试 2：Cgroup V2 限制物理内存
+### 尝试 2：Cgroup V2
 
 ```python
 nsjail_args.extend([
@@ -153,21 +168,17 @@ nsjail_args.extend([
 ])
 ```
 
-**关键区别**：
-- `rlimit_as`：限制虚拟内存（地址空间）
-- `cgroup_mem_max`：限制物理内存（RSS）
-
-**最终方案**：Cgroup V2，允许虚拟内存自由分配。
+**成功**！Cgroup V2 只限制物理内存，允许虚拟内存自由分配。
 
 
-## 第五个问题：如何发送沙箱内的图片？
+## 第六个问题：如何发送沙箱内的图片？
 
 ### 问题
 
 沙箱内路径：`/workspace/chart.png`
 真实路径：`/tmp/nsjail_session123_1234567890_abc/chart.png`
 
-LLM 只知道沙箱路径，如何发送？
+LLM 只知道沙箱路径。
 
 ### 解决方案：路径转换工具
 
@@ -191,7 +202,7 @@ async def send_sandbox_image(self, event, image_path: str):
 
 ## 最终架构
 
-经过多次尝试和调整，最终的方案：
+经过多次尝试，最终方案：
 
 ### Docker 配置
 
@@ -222,27 +233,29 @@ volumes:
 --cgroup_mem_max {memory_limit}
 ```
 
+
 ### 测试结果
 
-| 类别 | 通过率 |
-|------|--------|
-| 文件操作 | 100% |
-| 安全隔离 | 87.5% |
-| Python | 81% |
-| Shell | 75% |
-
+| 类别 | 通过率 | 说明 |
+|------|--------|------|
+| 文件操作 | 100% | 完美隔离 |
+| 安全隔离 | 87.5% | 需加强进程数限制 |
+| Python | 81% | 大部分功能正常 |
+| Shell | 75% | 基础命令可用 |
+| 网络 | 55% | 默认断网符合预期 |
+| Node.js | 6% | 内存限制影响 |
 
 ## 关键经验
 
 ### 1. 不要害怕失败
 
-每个方案都是在前一个失败的基础上改进的。Chroot → Bindmount，rlimit_as → Cgroup V2，都是通过试错找到的。
+每个方案都是在前一个失败的基础上改进的。用户命名空间 → 固定 UID，Chroot → Bindmount，rlimit_as → Cgroup V2。
 
 ### 2. 理解工具的本质
 
-- `--disable_clone_newnet` 不是"禁用网络"，而是"不创建网络命名空间"
-- `rlimit_as` 限制的是虚拟内存，不是物理内存
-- 理解这些细节才能做出正确的决策
+- `--disable_clone_newnet` 不是"禁用网络"
+- `rlimit_as` 限制虚拟内存，不是物理内存
+- 理解细节才能做出正确决策
 
 ### 3. 权衡是必然的
 
