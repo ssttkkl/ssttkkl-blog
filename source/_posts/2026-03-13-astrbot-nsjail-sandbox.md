@@ -336,7 +336,7 @@ nsjail_args.extend([
 
 #### 问题 8.2：ModuleNotFoundError
 
-使用 `PYTHONPATH` 方案时，找不到已安装的模块：
+Skills 目录挂载后，Python 找不到已安装的模块：
 
 ```python
 ModuleNotFoundError: No module named 'matplotlib'
@@ -353,19 +353,18 @@ ModuleNotFoundError: No module named 'matplotlib'
 当沙箱只挂载 `/AstrBot/data/skills` 时：
 - 链接文件存在 ✅
 - 链接目标不存在 ❌（`~/.cache/uv` 未挂载）
-- Python 顺着 `PYTHONPATH` 找到"死链接"，报 `ModuleNotFoundError`
+- Python 找到"死链接"，报 `ModuleNotFoundError`
 
-**解决方案**：强制物理复制
+**解决方案**：挂载 uv 缓存目录
 
-```bash
-# 在宿主机安装依赖时
-uv pip install -r requirements.txt --link-mode=copy
+```python
+# 在 NsJail 配置中添加
+"--bindmount", "/root/.cache/uv:/root/.cache/uv:ro",
 ```
 
-配合环境变量：
+配合环境变量避免权限问题：
 ```python
 "--env", "UV_CACHE_DIR=/tmp/.uv_cache",
-"--env", "PYTHONPATH=/AstrBot/data/skills/xxx/.venv/lib/python3.12/site-packages",
 ```
 
 
